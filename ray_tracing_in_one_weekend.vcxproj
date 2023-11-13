@@ -24,6 +24,7 @@
     <ProjectGuid>{1cc64bd6-c484-423b-9e69-0795371c46ba}</ProjectGuid>
     <RootNamespace>raytracinginoneweekend</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Rendy</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
