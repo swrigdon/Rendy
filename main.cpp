@@ -5,14 +5,23 @@
 #include <windows.h>
 #include <tchar.h>
 
-void render(
-		int IMAGE_WIDTH,
-		int IMAGE_HEIGHT,
-		Vec3 firstPixelLocation,
-		Vec3 CAMERA_CENTER,
-		Vec3 pixelDeltaU,
-		Vec3 pixelDeltaV
-	) {
+#define TO_FILE "TO_FILE"
+
+#ifndef TO_FILE
+#define render renderToFile
+#else
+#define render renderToWindow
+#endif
+
+void renderToFile(
+	int IMAGE_WIDTH,
+	int IMAGE_HEIGHT,
+	Vec3 firstPixelLocation,
+	Vec3 CAMERA_CENTER,
+	Vec3 pixelDeltaU,
+	Vec3 pixelDeltaV,
+	HDC hdc = 0
+) {
 
 	// Header of picture file
 	std::cout << "P3" << std::endl;
@@ -51,8 +60,47 @@ void render(
 	std::clog << "\r Done." << std::endl;
 }
 
+void renderToWindow(
+	int IMAGE_WIDTH,
+	int IMAGE_HEIGHT,
+	Vec3 firstPixelLocation,
+	Vec3 CAMERA_CENTER,
+	Vec3 pixelDeltaU,
+	Vec3 pixelDeltaV,
+	HDC hdc
+) {
+	for (int j = 0; j < IMAGE_HEIGHT; j++) {
+		for (int i = 0; i < IMAGE_WIDTH; i++) {
+			/*
+				the center of the pixel is calculated by multiplying our deltas for x and y
+				by our offsets and adding to the center of the first pixel in the grid
+			*/
+			Vec3 pixelCenter = firstPixelLocation + (pixelDeltaU * i) + (pixelDeltaV * j);
+			/*
+				our ray's direction is determined by subtracting our camera center, or eye
+				from the location of the pixel we are currently painting
+			*/
+			Vec3 rayDirection = pixelCenter - CAMERA_CENTER;
+			/*
+				we create our ray with the origin being camera center, or eye, and the
+				direction being what we just calculated above
+			*/
+			Ray r(CAMERA_CENTER, rayDirection);
+			/*
+				we create a color vector for the ray we just created above
+			*/
+			Color pixelColor = r.color();
+			/*
+				we write the color to our window for displaying
+			*/
+			COLORREF ref = RGB(pixelColor.r(), pixelColor.g(), pixelColor.b());
+			SetPixel(hdc, i, j, ref);
+		}
+	}
+}
 
-int main() {
+
+int init(HDC hdc = NULL) {
 	
 	/*
 		A note on the aspect ratio mentioned below: it is easier to do the math to calculate
@@ -60,16 +108,6 @@ int main() {
 		it. That way, we can simply change the width of the image and have the proportions of
 		the render be preserved.
 	*/
-
-	// Canvas Constants
-	const int IMAGE_WIDTH = 400;
-	const float ASPECT_RATIO = 16.0 / 9.0;
-
-	// Image Height Calculation
-	/*
-		The height of the render must be at least 1 (meaning at least 1 pixel high)
-	*/
-	const int IMAGE_HEIGHT = std::max(static_cast<int>(IMAGE_WIDTH / ASPECT_RATIO), 1);
 
 	/*
 		A note on the viewport mentioned below: the viewport is a virtual concept. In our case,
@@ -82,6 +120,16 @@ int main() {
 		integer nature of the render height. Instead we get the real ratio by dividing render width
 		by render height. Not doing this could result in clipping.
 	*/
+
+	// Canvas Constants
+	const int IMAGE_WIDTH = 1920;
+	const float ASPECT_RATIO = 16.0 / 9.0;
+
+	// Image Height Calculation
+	/*
+		The height of the render must be at least 1 (meaning at least 1 pixel high)
+	*/
+	const int IMAGE_HEIGHT = max(static_cast<int>(IMAGE_WIDTH / ASPECT_RATIO), 1);
 
 	// Camera Calculations
 	/*
@@ -158,8 +206,38 @@ int main() {
 		firstPixelLocation,
 		CAMERA_CENTER,
 		pixelDeltaU,
-		pixelDeltaV
+		pixelDeltaV,
+		hdc
 	);
+
+	return 0;
+}
+
+
+LRESULT CALLBACK WindowProc(
+	_In_ HWND hWnd,
+	_In_ UINT message,
+	_In_ WPARAM wParam,
+	_In_ LPARAM lParam
+) {
+	HDC hdc;
+
+	switch (message) {
+	case WM_PAINT:
+		PAINTSTRUCT ps;
+		hdc = BeginPaint(hWnd, &ps);
+		init(hdc);
+		EndPaint(hWnd, &ps);
+		break;
+	case WM_CLOSE:
+		DestroyWindow(hWnd);
+		break;
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+	default:
+		return DefWindowProc(hWnd, message, wParam, lParam);
+	}
 
 	return 0;
 }
@@ -172,14 +250,24 @@ int WINAPI WinMain(
 	_In_ int nCmdShow
 ) {
 
+	// Canvas Constants
+	const int IMAGE_WIDTH = 1920;
+	const float ASPECT_RATIO = 16.0 / 9.0;
+
+	// Image Height Calculation
+	/*
+		The height of the render must be at least 1 (meaning at least 1 pixel high)
+	*/
+	const int IMAGE_HEIGHT = max(static_cast<int>(IMAGE_WIDTH / ASPECT_RATIO), 1);
+
 	static TCHAR szWindowClass[] = _T("RayTracer");
-	static TCHAR szTitle[] = _T("Ray Tracing in One Weekend");
+	static TCHAR szTitle[] = _T("Rendy");
 
 	WNDCLASSEX wcex;
 
 	wcex.cbSize = sizeof(WNDCLASSEX);
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc = WinProc;
+	wcex.lpfnWndProc = WindowProc;
 	wcex.cbClsExtra = 0;
 	wcex.cbWndExtra = 0;
 	wcex.hInstance = hInstance;
@@ -193,7 +281,7 @@ int WINAPI WinMain(
 	if (!RegisterClassEx(&wcex)) {
 		MessageBox(NULL,
 			_T("Call to RegisterClassEx failed!"),
-			_T("Ray Tracing in One Weekend"),
+			_T("Rendy"),
 			NULL);
 
 		return 1;
@@ -217,8 +305,7 @@ int WINAPI WinMain(
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
-		500,
-		100,
+		IMAGE_WIDTH, IMAGE_HEIGHT,
 		NULL,
 		NULL,
 		hInstance,
@@ -228,7 +315,7 @@ int WINAPI WinMain(
 	if (!hWnd) {
 		MessageBox(NULL,
 			_T("Call to CreateWindowEx failed!"),
-			_T("Ray Tracing in One Weekend"),
+			_T("Rendy"),
 			NULL);
 
 		return 1;
@@ -240,19 +327,11 @@ int WINAPI WinMain(
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
 
+
 	// Message loop
 	MSG message;
 	while (GetMessage(&message, NULL, 0, 0)) {
 		TranslateMessage(&message);
+		DispatchMessage(&message);
 	}
-}
-
-
-LRESULT CALLBACK WinProc(
-	_In_ HWND hWnd,
-	_In_ UINT message,
-	_In_ WPARAM wParam,
-	_In_ LPARAM lParam
-) {
-
 }

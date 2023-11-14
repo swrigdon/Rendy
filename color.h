@@ -6,12 +6,11 @@
 #include <iostream>
 
 class Color : public Vec3 {
-	
 	public:
-		Color(float x, float y, float z) {
-			this->x(x);
-			this->y(y);
-			this->z(z);
+		Color(float r, float g, float b) {
+			this->x(r);
+			this->y(g);
+			this->z(b);
 		}
 
 		Color(Vec3 vector) {
@@ -19,6 +18,15 @@ class Color : public Vec3 {
 			this->y(vector.y());
 			this->z(vector.z());
 		}
+
+		const float r() const { return static_cast<int>(255.999 * this->x()); }
+		void r(float r) { this->x(r); }
+
+		const float g() const { return static_cast<int>(255.999 * this->y()); }
+		void g(float g) { this->g(g); }
+
+		const float b() const { return static_cast<int>(255.999 * this->z()); }
+		void b(float b) { this->b(b); }
 
 		void writeColor(std::ostream& out) {
 			out << static_cast<int>(255.999 * this->x()) << ' '
