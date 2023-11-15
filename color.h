@@ -19,6 +19,7 @@ class Color : public Vec3 {
 			this->z(vector.z());
 		}
 
+		// Setters and Getters
 		const float r() const { return static_cast<int>(255.999 * this->x()); }
 		void r(float r) { this->x(r); }
 
@@ -28,6 +29,7 @@ class Color : public Vec3 {
 		const float b() const { return static_cast<int>(255.999 * this->z()); }
 		void b(float b) { this->b(b); }
 
+		// Writes color value to stream passed in
 		void writeColor(std::ostream& out) {
 			out << static_cast<int>(255.999 * this->x()) << ' '
 				<< static_cast<int>(255.999 * this->y()) << ' '

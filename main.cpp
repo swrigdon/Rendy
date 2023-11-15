@@ -132,23 +132,41 @@ int WINAPI WinMain(
 	_In_ int nCmdShow
 ) {
 
-	static TCHAR szWindowClass[] = _T("RayTracer");
+	static TCHAR szWindowClass[] = _T("Rendy");
 	static TCHAR szTitle[] = _T("Rendy");
 
+	// WNDCLASSEX is a Win32 class that contains window information
+	// MSDN doc: https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-wndclassexa
 	WNDCLASSEX wcex;
+	// cbSize is the memory size of the class struct in bytes
 	wcex.cbSize = sizeof(WNDCLASSEX);
+	// Can be any combination of Window class styles
+	// See: https://learn.microsoft.com/en-us/windows/win32/winmsg/window-class-styles
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
+	// A pointer to the Window Procedure defined above
 	wcex.lpfnWndProc = WindowProc;
+	// Number of extra bytes to allocate beyond the class struct size
+	// The bytes are initialized to 0
 	wcex.cbClsExtra = 0;
+	// Number of extra bytes to allocate following the Window instance
+	// The bytes are initialized to 0
 	wcex.cbWndExtra = 0;
+	// Handle to the instance that contains the window procedure for the class
 	wcex.hInstance = hInstance;
+	// A handle to the class icon
 	wcex.hIcon = LoadIcon(wcex.hInstance, IDI_APPLICATION);
+	// A handle to the class cursor resource
 	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+	// A hangle to the class background brush, look into HBRUSH types
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+	// Pointer to a character string that sets the resource name of the class menu
 	wcex.lpszMenuName = NULL;
+	// A pointer to a string that sets the window class name
 	wcex.lpszClassName = szWindowClass;
+	// A handle to a small icon that is associated with the window class
 	wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
 
+	// If we can't successfully register the window class, kill Rendy
 	if (!RegisterClassEx(&wcex)) {
 		MessageBox(NULL,
 			_T("Call to RegisterClassEx failed!"),
@@ -158,32 +176,22 @@ int WINAPI WinMain(
 		return 1;
 	}
 
-	// The parameters to CreateWindowEx explained:
-	// WS_EX_OVERLAPPEDWINDOW : An optional extended window style.
-	// szWindowClass: the name of the application
-	// szTitle: the text that appears in the title bar
-	// WS_OVERLAPPEDWINDOW: the type of window to create
-	// CW_USEDEFAULT, CW_USEDEFAULT: initial position (x, y)
-	// 500, 100: initial size (width, length)
-	// NULL: the parent of this window
-	// NULL: this application does not have a menu bar
-	// hInstance: the first parameter from WinMain
-	// NULL: not used in this application
 	HWND hWnd = CreateWindowEx(
-		WS_EX_OVERLAPPEDWINDOW,
-		szWindowClass,
-		szTitle,
-		WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		WINDOW_WIDTH,
-		max(static_cast<int>(WINDOW_WIDTH / ASPECT_RATIO), 1),
-		NULL,
-		NULL,
-		hInstance,
-		NULL
+		WS_EX_OVERLAPPEDWINDOW,									// An optional extended window style
+		szWindowClass,											// The name of the application
+		szTitle,												// The text that appears in the title bar
+		WS_OVERLAPPEDWINDOW,									// The type of window to create
+		CW_USEDEFAULT,											// Inital position x
+		CW_USEDEFAULT,											// Initial position y
+		WINDOW_WIDTH,											// The width of the window
+		max(static_cast<int>(WINDOW_WIDTH / ASPECT_RATIO), 1),	// The height of the window
+		NULL,													// The parent of this window
+		NULL,													// This application does not have a menu bar
+		hInstance,												// The first parameter from WinMain
+		NULL													// Not used in this application
 	);
 
+	// If we can't successfully create the window and get the handle, kill Rendy
 	if (!hWnd) {
 		MessageBox(NULL,
 			_T("Call to CreateWindowEx failed!"),
@@ -193,12 +201,16 @@ int WINAPI WinMain(
 		return 1;
 	}
 
-	// The parameters to ShowWindow explained:
-	// hWnd: the value returned from CreateWindow
-	// nCmdShow: the fourth parameter from WinMain
-	ShowWindow(hWnd, nCmdShow);
-	UpdateWindow(hWnd);
+	// Sets the window's show state
+	// See: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-showwindow
+	ShowWindow(
+		hWnd,		// The value returned from CreateWindow; handle to the window
+		nCmdShow	// From WinMain parameters
+	);
 
+	// Updates the client area of the window by sending a WM_PAINT message to the window
+	// See: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-updatewindow
+	UpdateWindow(hWnd);
 
 	// Message loop
 	MSG message;
