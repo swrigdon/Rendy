@@ -6,12 +6,12 @@
 #include <windows.h>
 #include <tchar.h>
 
-#define TO_FILE "TO_FILE"
+#define TO_WINDOW true
 
-#ifndef TO_FILE
-#define render renderToFile
-#else
+#if TO_WINDOW
 #define render renderToWindow
+#else
+#define render renderToFile
 #endif
 
 constexpr int WINDOW_WIDTH = 1366;
