@@ -32,5 +32,11 @@
     <ClInclude Include="viewport.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="surface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sphere.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

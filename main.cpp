@@ -2,6 +2,8 @@
 #include "ray.h"
 #include "color.h"
 #include "viewport.h"
+#include "surface.h"
+#include "sphere.h"
 #include <iostream>
 #include <windows.h>
 #include <tchar.h>
@@ -14,8 +16,8 @@
 #define render renderToFile
 #endif
 
-constexpr int WINDOW_WIDTH = 1366;
-constexpr float ASPECT_RATIO = 16.0 / 9.0;
+int WINDOW_WIDTH = 1366;
+float ASPECT_RATIO = 16.0 / 9.0;
 
 void renderToFile(
 	Viewport vp,
@@ -41,14 +43,26 @@ void renderToFile(
 			*/
 			Vec3 rayDirection = pixelCenter - vp.cameraCenter();
 			/*
+				create a sphere in the scene
+			*/
+			Sphere s = Sphere(Vec3(0,0,-1), 0.5);
+			/*
+				create new Intersection struct
+			*/
+			Intersection intr = Intersection();
+			/*
 				we create our ray with the origin being camera center, or eye, and the
 				direction being what we just calculated above
 			*/
 			Ray r(vp.cameraCenter(), rayDirection);
 			/*
+				calculate if ray intersects with sphere
+			*/
+			bool rayIntersects = s.intersect(r, -1.0, 1.0, intr);
+			/*
 				we create a color vector for the ray we just created above
 			*/
-			Color pixelColor = r.color();
+			Color pixelColor = r.color(rayIntersects, intr.t);
 			/*
 				we write the color to our image file for displaying
 			*/
@@ -76,14 +90,26 @@ void renderToWindow(
 			*/
 			Vec3 rayDirection = pixelCenter - vp.cameraCenter();
 			/*
+				create a sphere in the scene
+			*/
+			Sphere s = Sphere(Vec3(0, 0, -1), 0.5);
+			/*
+				create new Intersection struct
+			*/
+			Intersection intr = Intersection();		
+			/*
 				we create our ray with the origin being camera center, or eye, and the
 				direction being what we just calculated above
 			*/
 			Ray r(vp.cameraCenter(), rayDirection);
 			/*
+				calculate if ray intersects with sphere
+			*/
+			bool rayIntersects = s.intersect(r, -1.0, 1.0, intr);
+			/*
 				we create a color vector for the ray we just created above
 			*/
-			Color pixelColor = r.color();
+			Color pixelColor = r.color(rayIntersects, intr.t);
 			/*
 				we write the color to our image file for displaying
 			*/
@@ -102,6 +128,7 @@ LRESULT CALLBACK WindowProc(
 ) {
 	HDC hdc;
 	Viewport vp;
+	UINT height;
 
 	switch (message) {
 	case WM_PAINT:
@@ -110,6 +137,9 @@ LRESULT CALLBACK WindowProc(
 		vp = Viewport(WINDOW_WIDTH);
 		render(vp, hdc);
 		EndPaint(hWnd, &ps);
+		break;
+	case WM_SIZE:
+		WINDOW_WIDTH = LOWORD(lParam);
 		break;
 	case WM_CLOSE:
 		DestroyWindow(hWnd);

@@ -133,6 +133,8 @@
   <ItemGroup>
     <ClInclude Include="color.h" />
     <ClInclude Include="ray.h" />
+    <ClInclude Include="sphere.h" />
+    <ClInclude Include="surface.h" />
     <ClInclude Include="vec3.h" />
     <ClInclude Include="viewport.h" />
   </ItemGroup>
