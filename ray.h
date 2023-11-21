@@ -3,7 +3,6 @@
 #define RAY_H
 
 #include "vec3.h"
-#include "color.h"
 
 class Ray {
 	private:
@@ -18,23 +17,6 @@ class Ray {
 		Vec3 origin() const { return orig; }
 		Vec3 direction() const { return dir; }
 		Vec3 at(float t) const { return orig + (dir*t); }
-
-		// Set a blue gradient based on the y direction of the ray
-		Color color(bool intersection, float t) const {
-
-			// If there is a collision with an object, color the pixel based on the 
-			// Normal vector of the array
-			if (intersection) {
-				Vec3 normal = unit(at(t) - Vec3(0, 0, -1));
-				return Color(normal.x() + 1, normal.y() + 1, normal.z() + 1) * 0.5; 
-			}
-
-			// If there is no collision, color the pixel along a blue->white gradient based on the y direction
-			float scalar = 0.5 * (unit(dir).y() + 1.0);
-			return Color(
-				(Vec3(1.0, 1.0, 1.0) * (1.0 - scalar)) + (Vec3(0.5, 0.7, 1.0) * scalar)
-			);
-		}
 };
 
 #endif

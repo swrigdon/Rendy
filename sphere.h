@@ -2,8 +2,8 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
+#include "rendyUtils.h"
 #include "surface.h"
-#include "vec3.h"
 
 class Sphere : public Surface {
 	public:
@@ -19,7 +19,7 @@ class Sphere : public Surface {
 			See https://raytracing.github.io/books/RayTracingInOneWeekend.html#addingasphere
 			for the full mathematical breakdown
 		*/
-		bool intersect(const Ray& r, float rayTMin, float rayTMax, Intersection& sect) const override {
+		bool intersect(const Ray& r, Interval rayT, Intersection& sect) const override {
 			// Calculate the offset of origin from the center of the camera
 			Vec3 originCenter = r.origin() - center;
 			// We can simplify the dot of a vector with itself to be the square of it's length
@@ -40,27 +40,33 @@ class Sphere : public Surface {
 			// Our quadratic discriminant formula is b^2 - 4ac. Taking out 4 we get b/2^2 - ac
 			//float discriminant = (b * b) - (4.0 * a * c);
 			float discriminant = (halfB * halfB) - (a * c);
-
 			// If our descriminant is negative, we cannot take the square root for our
 			// quadratic equation. Thus there is no intersection. Return false.
 			if (discriminant < 0) {
 				return false;
 			}
-
+			// Capture the square root of the discriminant for our quadratic calculations below
 			float sqrtD = sqrt(discriminant);
-
-			// We're going to look for a quadratic value that lies within the range
+			// In this case our root is based on a simplified quadratic formula. Since a square root can have a negative
+			// and a positive solution, we choose one to start with. In this case, we choose the negative first.
 			float root = (-halfB - sqrtD) / a;
-			if (root <= rayTMin || rayTMax <= root) {
+			// We check if our quadratic root is within the range of rayTMin < root < rayTMax
+			// where rayTMin and rayTMax are a range of t (time) that we allow the intersection to count
+			if (!rayT.surrounds(root)) {
+				// If the negative quadratic root is not within our range, we then try the positive root
 				root = (-halfB + sqrtD) / a;
-				if (root <= rayTMin || rayTMax <= root) {
+				// If neither root iw within our t range, then there is no intersection and we return false
+				if (!rayT.surrounds(root)) {
 					return false;
 				}
 			}
 
 			sect.t = root;
 			sect.point = r.at(root);
-			sect.normal = (sect.point - center) / radius;
+			// Our outward normal is calculated by getting the offset vector
+			// of our intersection point from the center, and dividing by the radius.
+			Vec3 outwardNormal = (sect.point - center) / radius;
+			sect.setFaceNormal(r, outwardNormal);
 
 			return true;
 		}

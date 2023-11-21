@@ -44,7 +44,7 @@ public:
 		/*
 			The height of the render must be at least 1 (meaning at least 1 pixel high)
 		*/
-		const int imageHeight = std::max(static_cast<int>(imageWidth / aspectRatio), 1);
+		const int imageHeight = max(static_cast<int>(imageWidth / aspectRatio), 1);
 
 		// Viewport dimension calculation
 		/*

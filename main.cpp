@@ -1,5 +1,4 @@
-#include "vec3.h"
-#include "ray.h"
+#include "rendyUtils.h"
 #include "color.h"
 #include "viewport.h"
 #include "surface.h"
@@ -21,6 +20,7 @@ float ASPECT_RATIO = 16.0 / 9.0;
 
 void renderToFile(
 	Viewport vp,
+	Surface& sceneObjects,
 	HDC hdc = 0
 ) {
 
@@ -43,28 +43,16 @@ void renderToFile(
 			*/
 			Vec3 rayDirection = pixelCenter - vp.cameraCenter();
 			/*
-				create a sphere in the scene
-			*/
-			Sphere s = Sphere(Vec3(0,0,-1), 0.5);
-			/*
-				create new Intersection struct
-			*/
-			Intersection intr = Intersection();
-			/*
 				we create our ray with the origin being camera center, or eye, and the
 				direction being what we just calculated above
 			*/
 			Ray r(vp.cameraCenter(), rayDirection);
 			/*
-				calculate if ray intersects with sphere
+				we create a Color for the ray we just created above
 			*/
-			bool rayIntersects = s.intersect(r, -1.0, 1.0, intr);
+			Color pixelColor = Color(sceneObjects, r);
 			/*
-				we create a color vector for the ray we just created above
-			*/
-			Color pixelColor = r.color(rayIntersects, intr.t);
-			/*
-				we write the color to our image file for displaying
+				we write the color to our image file for displaying using the writeColor method
 			*/
 			pixelColor.writeColor(std::cout);
 		}
@@ -73,8 +61,10 @@ void renderToFile(
 	std::clog << "\r Done." << std::endl;
 }
 
+
 void renderToWindow(
 	Viewport vp,
+	Surface& sceneObjects,
 	HDC hdc
 ) {
 	for (int j = 0; j < vp.imageHeight(); j++) {
@@ -90,33 +80,36 @@ void renderToWindow(
 			*/
 			Vec3 rayDirection = pixelCenter - vp.cameraCenter();
 			/*
-				create a sphere in the scene
-			*/
-			Sphere s = Sphere(Vec3(0, 0, -1), 0.5);
-			/*
-				create new Intersection struct
-			*/
-			Intersection intr = Intersection();		
-			/*
 				we create our ray with the origin being camera center, or eye, and the
 				direction being what we just calculated above
 			*/
 			Ray r(vp.cameraCenter(), rayDirection);
 			/*
-				calculate if ray intersects with sphere
+				Perform the coloring calculation for the pixel in the Color constructor
+				and get the Window COLORREF using the getColorRef method
 			*/
-			bool rayIntersects = s.intersect(r, -1.0, 1.0, intr);
+			COLORREF ref = Color(sceneObjects, r).getColorRef();
 			/*
-				we create a color vector for the ray we just created above
+				Set the color of the pixel in the window using the COLORREF
 			*/
-			Color pixelColor = r.color(rayIntersects, intr.t);
-			/*
-				we write the color to our image file for displaying
-			*/
-			COLORREF ref = RGB(pixelColor.r(), pixelColor.g(), pixelColor.b());
 			SetPixel(hdc, i, j, ref);
 		}
 	}
+}
+
+
+void rendyInit(HDC hdc) {
+	// Configure our viewport
+	Viewport vp = Viewport(WINDOW_WIDTH);
+
+	// Make our list of objects in our scene and add objects
+	SurfaceList sceneObjects;
+	// make_shared creates an object, in this case a sphere, and returns
+	// a shared_ptr to it
+	sceneObjects.add(std::make_shared<Sphere>(Vec3(0, 0, -1), 0.5));
+	sceneObjects.add(std::make_shared<Sphere>(Vec3(0, -100.5, -1), 100));
+
+	render(vp, sceneObjects, hdc);
 }
 
 
@@ -134,8 +127,7 @@ LRESULT CALLBACK WindowProc(
 	case WM_PAINT:
 		PAINTSTRUCT ps;
 		hdc = BeginPaint(hWnd, &ps);
-		vp = Viewport(WINDOW_WIDTH);
-		render(vp, hdc);
+		rendyInit(hdc);
 		EndPaint(hWnd, &ps);
 		break;
 	case WM_SIZE:

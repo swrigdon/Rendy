@@ -132,7 +132,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="color.h" />
+    <ClInclude Include="interval.h" />
     <ClInclude Include="ray.h" />
+    <ClInclude Include="rendyUtils.h" />
     <ClInclude Include="sphere.h" />
     <ClInclude Include="surface.h" />
     <ClInclude Include="vec3.h" />
