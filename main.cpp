@@ -1,115 +1,24 @@
 #include "rendyUtils.h"
-#include "color.h"
-#include "viewport.h"
-#include "surface.h"
 #include "sphere.h"
-#include <iostream>
+#include "camera.h"
 #include <windows.h>
 #include <tchar.h>
 
-#define TO_WINDOW true
 
-#if TO_WINDOW
-#define render renderToWindow
-#else
-#define render renderToFile
-#endif
-
-int WINDOW_WIDTH = 1366;
+int WINDOW_WIDTH = 1920;
 float ASPECT_RATIO = 16.0 / 9.0;
 
-void renderToFile(
-	Viewport vp,
-	Surface& sceneObjects,
-	HDC hdc = 0
-) {
-
-	// Header of picture file
-	std::cout << "P3" << std::endl;
-	std::cout << vp.imageWidth() << ' ' << vp.imageHeight() << std::endl;
-	std::cout << 255 << std::endl;
-
-	for (int j = 0; j < vp.imageHeight(); j++) {
-		std::clog << "\r Scanlines Remaining: " << (vp.imageHeight() - j) << ' ' << std::flush;
-		for (int i = 0; i < vp.imageWidth(); i++) {
-			/*
-				the center of the pixel is calculated by multiplying our deltas for x and y
-				by our offsets and adding to the center of the first pixel in the grid
-			*/
-			Vec3 pixelCenter = vp.firstPixelLocation() + (vp.pixelDeltaU() * i) + (vp.pixelDeltaV() * j);
-			/*
-				our ray's direction is determined by subtracting our camera center, or eye
-				from the location of the pixel we are currently painting
-			*/
-			Vec3 rayDirection = pixelCenter - vp.cameraCenter();
-			/*
-				we create our ray with the origin being camera center, or eye, and the
-				direction being what we just calculated above
-			*/
-			Ray r(vp.cameraCenter(), rayDirection);
-			/*
-				we create a Color for the ray we just created above
-			*/
-			Color pixelColor = Color(sceneObjects, r);
-			/*
-				we write the color to our image file for displaying using the writeColor method
-			*/
-			pixelColor.writeColor(std::cout);
-		}
-	}
-
-	std::clog << "\r Done." << std::endl;
-}
-
-
-void renderToWindow(
-	Viewport vp,
-	Surface& sceneObjects,
-	HDC hdc
-) {
-	for (int j = 0; j < vp.imageHeight(); j++) {
-		for (int i = 0; i < vp.imageWidth(); i++) {
-			/*
-				the center of the pixel is calculated by multiplying our deltas for x and y
-				by our offsets and adding to the center of the first pixel in the grid
-			*/
-			Vec3 pixelCenter = vp.firstPixelLocation() + (vp.pixelDeltaU() * i) + (vp.pixelDeltaV() * j);
-			/*
-				our ray's direction is determined by subtracting our camera center, or eye
-				from the location of the pixel we are currently painting
-			*/
-			Vec3 rayDirection = pixelCenter - vp.cameraCenter();
-			/*
-				we create our ray with the origin being camera center, or eye, and the
-				direction being what we just calculated above
-			*/
-			Ray r(vp.cameraCenter(), rayDirection);
-			/*
-				Perform the coloring calculation for the pixel in the Color constructor
-				and get the Window COLORREF using the getColorRef method
-			*/
-			COLORREF ref = Color(sceneObjects, r).getColorRef();
-			/*
-				Set the color of the pixel in the window using the COLORREF
-			*/
-			SetPixel(hdc, i, j, ref);
-		}
-	}
-}
-
-
 void rendyInit(HDC hdc) {
-	// Configure our viewport
-	Viewport vp = Viewport(WINDOW_WIDTH);
-
 	// Make our list of objects in our scene and add objects
 	SurfaceList sceneObjects;
 	// make_shared creates an object, in this case a sphere, and returns
 	// a shared_ptr to it
 	sceneObjects.add(std::make_shared<Sphere>(Vec3(0, 0, -1), 0.5));
 	sceneObjects.add(std::make_shared<Sphere>(Vec3(0, -100.5, -1), 100));
-
-	render(vp, sceneObjects, hdc);
+	// Create our Camera object
+	Camera camera = Camera(WINDOW_WIDTH, ASPECT_RATIO);
+	// Render our scene
+	camera.render(sceneObjects, hdc);
 }
 
 
@@ -120,7 +29,6 @@ LRESULT CALLBACK WindowProc(
 	_In_ LPARAM lParam
 ) {
 	HDC hdc;
-	Viewport vp;
 	UINT height;
 
 	switch (message) {
