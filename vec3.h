@@ -63,6 +63,14 @@ class Vec3 {
 		float length() const {
 			return std::sqrt(lengthSquared());
 		}
+
+		// Random vector generators for diffuse (matte) materials
+		static Vec3 random() {
+			return Vec3(random_float(), random_float(), random_float());
+		}
+		static Vec3 random(float min, float max) {
+			return Vec3(random_float(min, max), random_float(min, max), random_float(min, max));
+		}
 };
 
 // Vector Operator Helper Functions
@@ -100,6 +108,21 @@ inline Vec3 cross(const Vec3 &u, const Vec3 &v) {
 }
 inline Vec3 unit(Vec3 u) {
 	return u / u.length();
+}
+inline Vec3 randomInUnitSphere() {
+	while (true) {
+		Vec3 pointVector = Vec3::random(-1, 1);
+		if (pointVector.lengthSquared() < 1) {
+			return pointVector;
+		}
+	}
+}
+inline Vec3 randomUnitVectorInUnitSphere() {
+	return unit(randomInUnitSphere());
+}
+inline Vec3 randomOnHemisphere(const Vec3& normal) {
+	Vec3 unitSphereVector = randomUnitVectorInUnitSphere();
+	return dot(unitSphereVector, normal) > 0.0 ? unitSphereVector : -unitSphereVector;
 }
 
 #endif

@@ -4,9 +4,10 @@
 #include <windows.h>
 #include <tchar.h>
 
-
-int WINDOW_WIDTH = 1920;
-float ASPECT_RATIO = 16.0 / 9.0;
+int ALIAS_SAMPLES	= 10;
+int MAX_DEPTH		= 10;
+int WINDOW_WIDTH	= 1920;
+float ASPECT_RATIO	= 16.0 / 9.0;
 
 void rendyInit(HDC hdc) {
 	// Make our list of objects in our scene and add objects
@@ -18,7 +19,7 @@ void rendyInit(HDC hdc) {
 	// Create our Camera object
 	Camera camera = Camera(WINDOW_WIDTH, ASPECT_RATIO);
 	// Render our scene
-	camera.render(sceneObjects, hdc);
+	camera.render(ALIAS_SAMPLES, MAX_DEPTH, sceneObjects, hdc);
 }
 
 

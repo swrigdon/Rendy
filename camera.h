@@ -10,6 +10,7 @@
 
 class Camera {
 	private:
+		
 		Viewport _viewport;
 		Vec3 _cameraCenter;
 
@@ -35,6 +36,8 @@ class Camera {
 		const Vec3 cameraCenter() const { return _cameraCenter; }
 
 		void render(
+			const int aliasSamples,
+			const int maxDepth,
 			Surface& sceneObjects,
 			HDC hdc
 		) {
@@ -51,21 +54,45 @@ class Camera {
 					*/
 					Vec3 rayDirection = pixelCenter - _cameraCenter;
 					/*
+						do our AA sampling passes
+					*/
+					Vec3 aaColor = Vec3(0, 0, 0);
+					for (int sample = 0; sample < aliasSamples; sample++) {
+						/*
 						we create our ray with the origin being camera center, or eye, and the
 						direction being what we just calculated above
-					*/
-					Ray r(_cameraCenter, rayDirection);
+						*/
+						Ray r = getRay(pixelCenter);
+						Pixel pixel = Pixel(maxDepth, sceneObjects, r, i, j);
+						aaColor += pixel.getColorVector();
+					}
+					aaColor = antiAlias(aliasSamples, aaColor);
 					/*
 						Perform the coloring calculation for the pixel in the Color constructor
 						and get the Window COLORREF using the getColorRef method
 					*/
-					COLORREF ref = Pixel(sceneObjects, r, i, j).getColorRef();
+					COLORREF ref = RGB(aaColor.x(), aaColor.y(), aaColor.z());
 					/*
 						Set the color of the pixel in the window using the COLORREF
 					*/
 					SetPixel(hdc, i, j, ref);
 				}
 			}
+		}
+
+		Ray getRay(Vec3 pixelCenter) const {
+			Vec3 pixelSample = getSampleSquare() + pixelCenter;
+			return Ray(_cameraCenter, pixelSample - _cameraCenter);
+		}
+
+		Vec3 getSampleSquare() const {
+			float px = -0.5 + random_float();
+			float py = -0.5 + random_float();
+			return (_viewport.pixelDeltaU() * px) + (_viewport.pixelDeltaV() * py);
+		}
+
+		Vec3 antiAlias(int aliasSamples, Vec3 color) {
+			return color * (1.0 / aliasSamples);
 		}
 };
 
